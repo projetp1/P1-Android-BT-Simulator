@@ -3,6 +3,7 @@ package ch.hearc.p1.btsimulator;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.EmptyStackException;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.UUID;
@@ -24,6 +25,7 @@ import android.widget.Toast;
 public class BTSimulatorActivity extends Activity {
 	
 	private static final int REQUEST_ENABLE_BT = 1;
+	private static final int LIST_DEVICES = 2;
 
 	private BluetoothAdapter bta;
 	private BluetoothSocket bts;
@@ -65,15 +67,31 @@ public class BTSimulatorActivity extends Activity {
 		    startActivityForResult(enableBtIntent, REQUEST_ENABLE_BT);
 		}
 		else
-			connectAndSetup();
+		{
+			Intent serverIntent = new Intent(this, DeviceListActivity.class);
+    		startActivityForResult(serverIntent, LIST_DEVICES);
+		}
 	}
 
 	@Override
 	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
 		// TODO Auto-generated method stub
 		super.onActivityResult(requestCode, resultCode, data);
-		if(requestCode == REQUEST_ENABLE_BT && resultCode == RESULT_OK)
-			connectAndSetup();
+		if(requestCode == REQUEST_ENABLE_BT && resultCode == RESULT_OK) {
+			Intent serverIntent = new Intent(this, DeviceListActivity.class);
+			startActivityForResult(serverIntent, LIST_DEVICES);
+		}
+		else if(requestCode == LIST_DEVICES) {
+			// When DeviceListActivity returns with a device to connect
+            if (resultCode == Activity.RESULT_OK) {
+                // Get the device MAC address
+                String address = data.getExtras()
+                                     .getString(DeviceListActivity.EXTRA_DEVICE_ADDRESS);
+                // Get the BLuetoothDevice object
+                btd = bta.getRemoteDevice(address);
+                connectAndSetup();
+            }
+		}
 		else {
 			Toast.makeText(getApplicationContext(), "Vous devez activer Bluetooth !", Toast.LENGTH_LONG).show();
 			finish();
@@ -82,8 +100,6 @@ public class BTSimulatorActivity extends Activity {
 	
 	private void connectAndSetup() {
 		try {
-			btd = bta.getRemoteDevice("CC:AF:78:EC:E6:01");
-			btd.fetchUuidsWithSdp();
 			bts = btd.createRfcommSocketToServiceRecord(UUID.fromString("00001101-0000-1000-8000-00805F9B34FB"));
 			bts.connect();
 			
@@ -93,48 +109,9 @@ public class BTSimulatorActivity extends Activity {
 			out = bts.getOutputStream();
 			in = bts.getInputStream();
 			
-			new Timer("input", true).schedule(new TimerTask() {
-				
-				@Override
-				public void run() {
-					// TODO Auto-generated method stub
-					int tmp;
-					try {
-						while((tmp = in.read()) != -1) {
-							inbuffer.append((char)tmp);
-						}
-					} catch (IOException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					}
-					
-					while((tmp = inbuffer.indexOf("\r\n")) != -1) {
-						try {
-							commandQueue.add(new RS232Command(inbuffer.substring(0, tmp + 2)));
-							inbuffer.delete(0, tmp + 2);
-						} catch (IllegalArgumentException e) {
-							// TODO Auto-generated catch block
-							e.printStackTrace();
-						} catch (CrcException e) {
-							// TODO Auto-generated catch block
-							e.printStackTrace();
-						}
-					}
-					
-					
-					while(!commandQueue.isEmpty()) {
-						RS232Command com = commandQueue.poll();
-						if (com.getCommandNumber() == RS232CommandType.EMPTY) {
-							try {
-								out.write("$00,*22\r\n".getBytes());
-							} catch (IOException e) {
-								// TODO Auto-generated catch block
-								e.printStackTrace();
-							}
-						}
-					}
-				}
-			}, 200, 500);
+			String com = "$" + RS232CommandType.EMPTY.toString() + ",*";
+			com += RS232Command.hexToAscii(RS232Command.computeCrc(com));
+			out.write(com.getBytes());
 			
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
@@ -155,6 +132,7 @@ public class BTSimulatorActivity extends Activity {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+		finish();
 	}
 
 }
