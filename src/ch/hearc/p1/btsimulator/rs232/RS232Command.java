@@ -138,6 +138,6 @@ public class RS232Command
 	 */
 	public static String hexToAscii(byte b)
 	{
-		  return Integer.toString( ( b & 0xff ) + 0x100, 16).substring( 1 );
+		  return Integer.toString( ( b & 0xff ) + 0x100, 16).substring( 1 ).toUpperCase();
 	}
 }

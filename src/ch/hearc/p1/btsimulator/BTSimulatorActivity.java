@@ -161,9 +161,21 @@ public class BTSimulatorActivity extends Activity implements SensorEventListener
 	
 	private void send() {
 		SensorManager smg = (SensorManager)getSystemService(SENSOR_SERVICE);
+		
 		Sensor acc = smg.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
+		if(acc == null) {
+			Toast.makeText(getApplicationContext(), "Pas d'accéléromètre sur cet appareil !", Toast.LENGTH_LONG);
+			finish();
+			return;
+		}
 		smg.registerListener(this, acc, SensorManager.SENSOR_DELAY_NORMAL);
+		
 		Sensor mag = smg.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD);
+		if(mag == null) {
+			Toast.makeText(getApplicationContext(), "Pas de magnétomètre sur cet appareil !", Toast.LENGTH_LONG);
+			finish();
+			return;
+		}
 		smg.registerListener(this, mag, SensorManager.SENSOR_DELAY_NORMAL);
 		
 		LocationManager lma = (LocationManager) getApplicationContext().getSystemService(Context.LOCATION_SERVICE);
@@ -290,6 +302,14 @@ public class BTSimulatorActivity extends Activity implements SensorEventListener
 			e.printStackTrace();
 		}
 		finish();
+	}
+
+	@Override
+	protected void onPause() {
+		// TODO Auto-generated method stub
+		super.onPause();
+		SensorManager smg = (SensorManager)getSystemService(SENSOR_SERVICE);
+		smg.unregisterListener(this);
 	}
 
 	public void onSensorChanged(SensorEvent event) {
