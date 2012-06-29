@@ -171,7 +171,7 @@ public class BTSimulatorActivity extends Activity implements SensorEventListener
 	
 	private void send() {
 		SensorManager smg = (SensorManager)getSystemService(SENSOR_SERVICE);
-		Sensor acc = smg.getDefaultSensor(Sensor.TYPE_GRAVITY);
+		Sensor acc = smg.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
 		smg.registerListener(this, acc, SensorManager.SENSOR_DELAY_NORMAL);
 		Sensor mag = smg.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD);
 		smg.registerListener(this, mag, SensorManager.SENSOR_DELAY_NORMAL);
@@ -298,8 +298,45 @@ public class BTSimulatorActivity extends Activity implements SensorEventListener
 
 	public void onSensorChanged(SensorEvent event) {
 		// TODO Auto-generated method stub
-		if(event.sensor.getType() == Sensor.TYPE_GRAVITY) {
-			String data = event.values[0] + "," + event.values[1] + "," + event.values[2];
+		if(event.sensor.getType() == Sensor.TYPE_ACCELEROMETER) {
+			((TextView)findViewById(R.id.textView1)).setText(event.values[0] + "," + event.values[1] + "," + event.values[2]);
+			
+			double x = event.values[0];
+			double y = event.values[1];
+			double z = - event.values[2];
+			
+			//Conversion
+			x /= 9.81;
+			y /= 9.81;
+			z /= 9.81;
+			
+			// x, y et z sont en g
+			// 2g = 16384
+			x *= 16384.0;
+			y *= 16384.0;
+			z *= 16384.0;
+			
+			//On ne veut pas de valeurs négatives :
+			x += 32768.0;
+			y += 32768.0;
+			z += 32768.0;
+			
+			int ix, iy, iz;
+			ix = (int)x;
+			iy = (int)y;
+			iz = (int)z;
+			
+			//Contrôle des bornes
+			ix = (ix <= 0) ? 0 : ix;
+			iy = (iy <= 0) ? 0 : iy;
+			iz = (iz <= 0) ? 0 : iz;
+
+			ix = (ix >= 65535) ? 65535 : ix;
+			iy = (iy >= 65535) ? 65535 : iy;
+			iz = (iz >= 65535) ? 65535 : iz;
+			
+			
+			String data = ix + "," + iy + "," + iz;
 			try {
 				sendFrame(new RS232Command(RS232CommandType.ACCELEROMETER_UPDATE, data));
 			} catch (IOException e) {
@@ -308,7 +345,45 @@ public class BTSimulatorActivity extends Activity implements SensorEventListener
 			}
 		}
 		else if(event.sensor.getType() == Sensor.TYPE_MAGNETIC_FIELD) {
-			String data = event.values[0] + "," + event.values[1] + "," + event.values[2];
+			((TextView)findViewById(R.id.textView2)).setText(event.values[0] + "," + event.values[1] + "," + event.values[2]);
+			
+			// Le champ va du Nord au Sud, il faut prendre le contraire. De plus, il faut inverser l'axe z.
+			double x = - event.values[0];
+			double y = - event.values[1];
+			double z = event.values[2];
+			
+			// Le champ va de -200 à 200 uT
+			x /= 200.0;
+			y /= 200.0;
+			z /= 200.0;
+			
+			// x, y et z sont en g
+			// 2g = 16384
+			x *= 32768.0;
+			y *= 32768.0;
+			z *= 32768.0;
+			
+			//On ne veut pas de valeurs négatives :
+			x += 32768.0;
+			y += 32768.0;
+			z += 32768.0;
+			
+			int ix, iy, iz;
+			ix = (int)x;
+			iy = (int)y;
+			iz = (int)z;
+			
+			//Contrôle des bornes
+			ix = (ix <= 0) ? 0 : ix;
+			iy = (iy <= 0) ? 0 : iy;
+			iz = (iz <= 0) ? 0 : iz;
+
+			ix = (ix >= 65535) ? 65535 : ix;
+			iy = (iy >= 65535) ? 65535 : iy;
+			iz = (iz >= 65535) ? 65535 : iz;
+			
+			
+			String data = ix + "," + iy + "," + iz;
 			try {
 				sendFrame(new RS232Command(RS232CommandType.MAGNETOMETER_UPDATE, data));
 			} catch (IOException e) {
