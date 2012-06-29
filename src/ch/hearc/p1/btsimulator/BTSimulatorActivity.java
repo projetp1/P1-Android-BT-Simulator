@@ -3,18 +3,12 @@ package ch.hearc.p1.btsimulator;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.security.AccessControlException;
-import java.util.EmptyStackException;
-import java.util.Timer;
-import java.util.TimerTask;
 import java.util.UUID;
-import java.util.concurrent.ConcurrentLinkedQueue;
 
-import ch.hearc.p1.btsimulator.rs232.CrcException;
-import ch.hearc.p1.btsimulator.rs232.RS232Command;
-import ch.hearc.p1.btsimulator.rs232.RS232CommandType;
 import android.app.Activity;
-import android.bluetooth.*;
+import android.bluetooth.BluetoothAdapter;
+import android.bluetooth.BluetoothDevice;
+import android.bluetooth.BluetoothSocket;
 import android.content.Context;
 import android.content.Intent;
 import android.hardware.Sensor;
@@ -26,15 +20,14 @@ import android.location.LocationManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
-import android.renderscript.Sampler.Value;
-import android.util.AttributeSet;
 import android.util.Log;
 import android.view.View;
 import android.widget.ImageView;
-import android.widget.LinearLayout;
-import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
+import ch.hearc.p1.btsimulator.rs232.CrcException;
+import ch.hearc.p1.btsimulator.rs232.RS232Command;
+import ch.hearc.p1.btsimulator.rs232.RS232CommandType;
 
 public class BTSimulatorActivity extends Activity implements SensorEventListener {
 	
@@ -47,7 +40,6 @@ public class BTSimulatorActivity extends Activity implements SensorEventListener
 	
 	private ConnectedThread cth;
 	private OutputStream out;
-	private InputStream in;
 	public StringBuffer inbuffer = new StringBuffer();
 	
 	
@@ -96,7 +88,7 @@ public class BTSimulatorActivity extends Activity implements SensorEventListener
 	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
-		// TODO Auto-generated method stub
+
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.main);
 		
@@ -118,7 +110,6 @@ public class BTSimulatorActivity extends Activity implements SensorEventListener
 
 	@Override
 	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-		// TODO Auto-generated method stub
 		super.onActivityResult(requestCode, resultCode, data);
 		if(requestCode == REQUEST_ENABLE_BT && resultCode == RESULT_OK) {
 			Intent serverIntent = new Intent(this, DeviceListActivity.class);
@@ -146,26 +137,25 @@ public class BTSimulatorActivity extends Activity implements SensorEventListener
 			bts = btd.createRfcommSocketToServiceRecord(UUID.fromString("00001101-0000-1000-8000-00805F9B34FB"));
 			bts.connect();
 			
-			final TextView txt = (TextView) findViewById(R.id.editText1);
-			txt.setText("Connecté : " + btd.getName() + "\n\n");
+			final TextView txt = (TextView) findViewById(R.id.connected);
+			txt.setText("Connecté à " + btd.getName());
 
 			out = bts.getOutputStream();
-			in = bts.getInputStream();
+			bts.getInputStream();
 			
 			cth = new ConnectedThread(bts);
 			cth.start();
 			
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 
-			Toast.makeText(getApplicationContext(), "Impossible d'ouvrir le serveur de connexion !", Toast.LENGTH_LONG).show();
+			Toast.makeText(getApplicationContext(), "Impossible d'ouvrir la connexion !", Toast.LENGTH_LONG).show();
 			finish();
 		}
 	}
 	
 	public void send(View view) {
-		if(view.getId() == R.id.sendbutton)
+		if(view.getId() == R.id.send)
 			send();
 	}
 	
@@ -215,13 +205,20 @@ public class BTSimulatorActivity extends Activity implements SensorEventListener
 		}
 	}
 	
+	public void stopsending(View view) {
+		if(view.getId() != R.id.stop)
+			return;
+		
+		SensorManager smg = (SensorManager)getSystemService(SENSOR_SERVICE);
+		smg.unregisterListener(this);
+	}
+	
 	private void sendFrame(RS232Command com) throws IOException {
 		String command = com.getCommandNumber().toString() + "," + com.getDatas();
 		command = "$" + command + "*" + (RS232Command.hexToAscii(RS232Command.computeCrc(command)) + "\r\n");
 		try {
 			out.write(command.getBytes());
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			if(e.getMessage().equalsIgnoreCase("socket closed"))
 				finish();
 			else
@@ -285,7 +282,6 @@ public class BTSimulatorActivity extends Activity implements SensorEventListener
 
 	@Override
 	protected void onDestroy() {
-		// TODO Auto-generated method stub
 		super.onDestroy();
 		try {
 			bts.close();
@@ -297,9 +293,8 @@ public class BTSimulatorActivity extends Activity implements SensorEventListener
 	}
 
 	public void onSensorChanged(SensorEvent event) {
-		// TODO Auto-generated method stub
 		if(event.sensor.getType() == Sensor.TYPE_ACCELEROMETER) {
-			((TextView)findViewById(R.id.textView1)).setText(event.values[0] + "," + event.values[1] + "," + event.values[2]);
+			((TextView)findViewById(R.id.acc)).setText(event.values[0] + "," + event.values[1] + "," + event.values[2]);
 			
 			double x = event.values[0];
 			double y = event.values[1];
@@ -345,7 +340,7 @@ public class BTSimulatorActivity extends Activity implements SensorEventListener
 			}
 		}
 		else if(event.sensor.getType() == Sensor.TYPE_MAGNETIC_FIELD) {
-			((TextView)findViewById(R.id.textView2)).setText(event.values[0] + "," + event.values[1] + "," + event.values[2]);
+			((TextView)findViewById(R.id.mag)).setText(event.values[0] + "," + event.values[1] + "," + event.values[2]);
 			
 			// Le champ va du Nord au Sud, il faut prendre le contraire. De plus, il faut inverser l'axe z.
 			double x = - event.values[0];
@@ -396,8 +391,7 @@ public class BTSimulatorActivity extends Activity implements SensorEventListener
 	}
 
 	public void onAccuracyChanged(Sensor sensor, int accuracy) {
-		// TODO Auto-generated method stub
-		
+		// Nothing to do
 	}
 	
 	/**
@@ -405,25 +399,19 @@ public class BTSimulatorActivity extends Activity implements SensorEventListener
      * It handles all incoming and outgoing transmissions.
      */
     private class ConnectedThread extends Thread {
-        private final BluetoothSocket mmSocket;
         private final InputStream mmInStream;
-        private final OutputStream mmOutStream;
 
         public ConnectedThread(BluetoothSocket socket) {
-            mmSocket = socket;
             InputStream tmpIn = null;
-            OutputStream tmpOut = null;
 
             // Get the BluetoothSocket input and output streams
             try {
                 tmpIn = socket.getInputStream();
-                tmpOut = socket.getOutputStream();
             } catch (IOException e) {
                 Log.e("BTSIMCT", "temp sockets not created", e);
             }
 
             mmInStream = tmpIn;
-            mmOutStream = tmpOut;
         }
 
         public void run() {

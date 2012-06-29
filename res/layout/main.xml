@@ -19,32 +19,34 @@
     android:orientation="vertical" >
 
     <Button
-        android:id="@+id/sendbutton"
+        android:id="@+id/send"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:onClick="send"
         android:text="@string/send" />
 
-    <EditText
-        android:id="@+id/editText1"
+    <Button
+        android:id="@+id/stop"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_gravity="top"
-        android:ems="10"
-        android:inputType="none"
-        android:singleLine="false" >
-
-        <requestFocus />
-    </EditText>
+        android:onClick="stopsending"
+        android:text="@string/stopsending" />
 
     <TextView
-        android:id="@+id/textView1"
+        android:id="@+id/connected"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/title_connected_to"
+        android:textAppearance="?android:attr/textAppearanceLarge" />
+
+    <TextView
+        android:id="@+id/acc"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="TextView" />
 
     <TextView
-        android:id="@+id/textView2"
+        android:id="@+id/mag"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="TextView" />
