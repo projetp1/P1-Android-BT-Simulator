@@ -42,6 +42,9 @@ public class BTSimulatorActivity extends Activity implements SensorEventListener
 	private OutputStream out;
 	public StringBuffer inbuffer = new StringBuffer();
 	
+	private float[] mag;
+	private float[] acc;
+	
 	
 	/**
 	 * Represents the direction of the arrow that is displayed on the PIC screen.
@@ -314,7 +317,9 @@ public class BTSimulatorActivity extends Activity implements SensorEventListener
 
 	public void onSensorChanged(SensorEvent event) {
 		if(event.sensor.getType() == Sensor.TYPE_ACCELEROMETER) {
-			((TextView)findViewById(R.id.acc)).setText(event.values[0] + "," + event.values[1] + "," + event.values[2]);
+			//((TextView)findViewById(R.id.acc)).setText(event.values[0] + "," + event.values[1] + "," + event.values[2]);
+			
+			acc = event.values.clone();
 			
 			double x = event.values[0];
 			double y = event.values[1];
@@ -359,9 +364,9 @@ public class BTSimulatorActivity extends Activity implements SensorEventListener
 				e.printStackTrace();
 			}
 		}
-		else if(event.sensor.getType() == Sensor.TYPE_MAGNETIC_FIELD) {
-			((TextView)findViewById(R.id.mag)).setText(event.values[0] + "," + event.values[1] + "," + event.values[2]);
-			
+		else if(event.sensor.getType() == Sensor.TYPE_MAGNETIC_FIELD) {			
+			mag = event.values.clone();
+
 			// Le champ va du Nord au Sud, il faut prendre le contraire. De plus, il faut inverser l'axe z.
 			double x = - event.values[0];
 			double y = - event.values[1];
@@ -397,7 +402,6 @@ public class BTSimulatorActivity extends Activity implements SensorEventListener
 			iy = (iy >= 65535) ? 65535 : iy;
 			iz = (iz >= 65535) ? 65535 : iz;
 			
-			
 			String data = ix + "," + iy + "," + iz;
 			try {
 				sendFrame(new RS232Command(RS232CommandType.MAGNETOMETER_UPDATE, data));
@@ -408,6 +412,24 @@ public class BTSimulatorActivity extends Activity implements SensorEventListener
 		}
 		else
 			Log.w("BTSIM", "Unknown Sensor : "+ event.sensor.getName());
+		
+		float Ro[] = new float[9];
+		float I[] = new float[9];
+
+		if(mag != null && acc != null) {
+			boolean success = SensorManager.getRotationMatrix(Ro, I, acc, mag);
+			if (success) {
+				float orientation[] = new float[3];
+				SensorManager.getOrientation(Ro, orientation);
+				((TextView) findViewById(R.id.acc)).setText(String.valueOf(Math.toDegrees(SensorManager.getInclination(I))));
+				((TextView) findViewById(R.id.mag)).setText((Math
+						.toDegrees(orientation[0])
+						+ "\n"
+						+ Math.toDegrees(orientation[1]) + "\n" + Math
+						.toDegrees(orientation[2])));
+	
+			}
+		}
 	}
 
 	public void onAccuracyChanged(Sensor sensor, int accuracy) {
