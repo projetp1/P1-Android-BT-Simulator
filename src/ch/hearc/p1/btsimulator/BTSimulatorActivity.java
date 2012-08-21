@@ -317,7 +317,8 @@ public class BTSimulatorActivity extends Activity implements SensorEventListener
 
 	public void onSensorChanged(SensorEvent event) {
 		if(event.sensor.getType() == Sensor.TYPE_ACCELEROMETER) {
-			//((TextView)findViewById(R.id.acc)).setText(event.values[0] + "," + event.values[1] + "," + event.values[2]);
+			
+			((TextView)findViewById(R.id.acc)).setText("x: " + event.values[0] + "\ny: " + event.values[1] + "\nz: " + event.values[2]);
 			
 			acc = event.values.clone();
 			
@@ -354,7 +355,7 @@ public class BTSimulatorActivity extends Activity implements SensorEventListener
 			ix = (ix >= 65535) ? 65535 : ix;
 			iy = (iy >= 65535) ? 65535 : iy;
 			iz = (iz >= 65535) ? 65535 : iz;
-			
+						
 			
 			String data = ix + "," + iy + "," + iz;
 			try {
@@ -364,18 +365,21 @@ public class BTSimulatorActivity extends Activity implements SensorEventListener
 				e.printStackTrace();
 			}
 		}
-		else if(event.sensor.getType() == Sensor.TYPE_MAGNETIC_FIELD) {			
+		else if(event.sensor.getType() == Sensor.TYPE_MAGNETIC_FIELD) {		
+			
+			((TextView)findViewById(R.id.mag)).setText("x: " + event.values[0] + "\ny: " + event.values[1] + "\nz: " + event.values[2]);
+			
 			mag = event.values.clone();
-
+			
 			// Le champ va du Nord au Sud, il faut prendre le contraire. De plus, il faut inverser l'axe z.
 			double x = - event.values[0];
 			double y = - event.values[1];
 			double z = event.values[2];
 			
-			// Le champ va de -200 à 200 uT
-			x /= 200.0;
-			y /= 200.0;
-			z /= 200.0;
+			// Le champ va de -80 à 80 uT
+			x /= 80.0;
+			y /= 80.0;
+			z /= 80.0;
 			
 			// x, y et z sont en g
 			// 2g = 16384
@@ -421,13 +425,10 @@ public class BTSimulatorActivity extends Activity implements SensorEventListener
 			if (success) {
 				float orientation[] = new float[3];
 				SensorManager.getOrientation(Ro, orientation);
-				((TextView) findViewById(R.id.acc)).setText(String.valueOf(Math.toDegrees(SensorManager.getInclination(I))));
-				((TextView) findViewById(R.id.mag)).setText((Math
-						.toDegrees(orientation[0])
-						+ "\n"
-						+ Math.toDegrees(orientation[1]) + "\n" + Math
-						.toDegrees(orientation[2])));
-	
+				((TextView) findViewById(R.id.ang)).setText(
+						"azimut: " + Math.toDegrees(orientation[0]) + "\npitch: "
+						+ Math.toDegrees(orientation[1]) + "\nroll: "
+						+ Math.toDegrees(orientation[2]));
 			}
 		}
 	}

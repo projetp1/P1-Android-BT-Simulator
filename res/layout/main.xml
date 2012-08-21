@@ -43,13 +43,19 @@
         android:id="@+id/acc"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="TextView" />
+        android:text="Accéléromètre\n\n" />
 
     <TextView
         android:id="@+id/mag"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="TextView" />
+        android:text="Magnétomètre\n\n" />
+
+    <TextView
+        android:id="@+id/ang"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Angles\n\n" />
 
     <ImageView
         android:id="@+id/arrow"
