@@ -423,6 +423,7 @@ public class BTSimulatorActivity extends Activity implements SensorEventListener
 		if(mag != null && acc != null) {
 			boolean success = SensorManager.getRotationMatrix(Ro, I, acc, mag);
 			if (success) {
+				SensorManager.remapCoordinateSystem(Ro, SensorManager.AXIS_X, SensorManager.AXIS_Z, Ro);
 				float orientation[] = new float[3];
 				SensorManager.getOrientation(Ro, orientation);
 				((TextView) findViewById(R.id.ang)).setText(
