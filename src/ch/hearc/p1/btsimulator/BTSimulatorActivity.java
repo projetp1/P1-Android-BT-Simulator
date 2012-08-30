@@ -51,7 +51,7 @@ public class BTSimulatorActivity extends Activity implements SensorEventListener
 	 */
 	public enum PicArrowDirection
 	{
-		NORTH(0), NORTHWEST(1), WEST(2), SOUTHWEST(3), SOUTH(4), SOUTHEAST(5), EAST(6), NORTHEAST(7);
+		NORTH(0), NORTHWEST(1), WEST(2), SOUTHWEST(3), SOUTH(4), SOUTHEAST(5), EAST(6), NORTHEAST(7), ONTARGET(8);
 		private int number;
 		private PicArrowDirection(int num) {
 			number = num;
@@ -75,6 +75,8 @@ public class BTSimulatorActivity extends Activity implements SensorEventListener
 					return R.drawable.sw;
 				case WEST:
 					return R.drawable.w;
+				case ONTARGET:
+					return R.drawable.ontarget;
 				default:
 					return 0;
 			}
